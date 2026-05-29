@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/overlayRoot"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/overlay_panel_bg"
+    android:padding="14dp"
+    android:elevation="12dp">
+
+    <!-- Header row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
+
+        <View
+            android:id="@+id/dragHandle"
+            android:layout_width="0dp"
+            android:layout_height="22dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⊕ Offset"
+            android:textColor="#FFFFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:layout_weight="0" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/btnCollapse"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:text="−"
+            android:textColor="#FFFFFFFF"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:layout_weight="0" />
+    </LinearLayout>
+
+    <!-- Expandable content -->
+    <LinearLayout
+        android:id="@+id/expandableContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- X Offset -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="2dp">
+            <TextView
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="X"
+                android:textColor="#BB86FC"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <com.google.android.material.slider.Slider
+                android:id="@+id/overlaySliderX"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:valueFrom="-300"
+                android:valueTo="300"
+                android:value="0"
+                android:stepSize="1"
+                app:thumbColor="#BB86FC"
+                app:thumbRadius="8dp"
+                app:trackColorActive="#BB86FC"
+                app:trackColorInactive="#3D3D3D"
+                app:trackHeight="3dp" />
+            <TextView
+                android:id="@+id/overlayTvX"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#BB86FC"
+                android:textSize="11sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <!-- Y Offset -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+            <TextView
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="Y"
+                android:textColor="#BB86FC"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <com.google.android.material.slider.Slider
+                android:id="@+id/overlaySliderY"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:valueFrom="-300"
+                android:valueTo="300"
+                android:value="0"
+                android:stepSize="1"
+                app:thumbColor="#BB86FC"
+                app:thumbRadius="8dp"
+                app:trackColorActive="#BB86FC"
+                app:trackColorInactive="#3D3D3D"
+                app:trackHeight="3dp" />
+            <TextView
+                android:id="@+id/overlayTvY"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#BB86FC"
+                android:textSize="11sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <!-- Stop button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/overlayBtnStop"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:text="Stop Overlay"
+            android:textSize="13sp"
+            app:cornerRadius="8dp"
+            app:backgroundTint="#CF6679" />
+    </LinearLayout>
+</LinearLayout>
