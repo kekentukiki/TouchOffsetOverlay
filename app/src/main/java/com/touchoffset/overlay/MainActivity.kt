@@ -53,7 +53,11 @@ class MainActivity : AppCompatActivity() {
             addAction(ACTION_SERVICE_STOPPED)
             addAction(ACTION_OFFSET_CHANGED)
         }
-        registerReceiver(statusReceiver, filter, RECEIVER_NOT_EXPORTED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(statusReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(statusReceiver, filter)
+        }
     }
 
     override fun onPause() {
