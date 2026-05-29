@@ -8,22 +8,15 @@ import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.IBinder
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import com.google.android.material.slider.Slider
 import com.touchoffset.overlay.databinding.OverlayPanelBinding
 import kotlin.math.abs
 
-/**
- * Foreground service that manages two overlay windows:
- *  1. A full-screen transparent view that captures all touches.
- *  2. A small draggable control panel with X/Y sliders and a stop button.
- */
 class OverlayService : Service() {
 
     companion object {
@@ -39,7 +32,6 @@ class OverlayService : Service() {
     private var panelBinding: OverlayPanelBinding? = null
     private var isPanelExpanded = true
 
-    // Panel drag state
     private var panelInitialX = 0
     private var panelInitialY = 0
     private var touchInitialX = 0f
@@ -90,34 +82,25 @@ class OverlayService : Service() {
 
         val capture = View(this)
         capture.setBackgroundColor(0x00000000)
-
-        capture.setOnTouchListener { _, event ->
-            handleTouchEvent(event)
-        }
+        capture.setOnTouchListener { _, event -> handleTouchEvent(event) }
 
         windowManager.addView(capture, params)
         touchCaptureView = capture
     }
 
-    /**
-     * For each touch action, re-dispatch at the offset position via AccessibilityService,
-     * then pass the event through so normal app interaction continues.
-     * We use ACTION_DOWN only to avoid sending duplicate events for move/up.
-     */
     private fun handleTouchEvent(event: MotionEvent): Boolean {
         if (event.actionMasked == MotionEvent.ACTION_DOWN) {
             val rawX = event.rawX
             val rawY = event.rawY
             val dispatched = TouchAccessibilityService.dispatchOffsetTouch(rawX, rawY)
-            Log.d(TAG, "Touch at ($rawX,$rawY) → offset dispatched=$dispatched")
+            Log.d(TAG, "Touch at ($rawX,$rawY) → dispatched=$dispatched")
         }
-        // Return false so the original touch also propagates to the app below
         return false
     }
 
     private fun removeTouchCaptureOverlay() {
         touchCaptureView?.let {
-            try { windowManager.removeView(it) } catch (e: Exception) { /* already removed */ }
+            try { windowManager.removeView(it) } catch (e: Exception) { Log.w(TAG, "removeView: ${e.message}") }
             touchCaptureView = null
         }
     }
@@ -125,10 +108,6 @@ class OverlayService : Service() {
     // ─── Control panel ────────────────────────────────────────────────────────
 
     private fun addControlPanel() {
-        val metrics = DisplayMetrics()
-        @Suppress("DEPRECATION")
-        windowManager.defaultDisplay.getMetrics(metrics)
-
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -145,13 +124,11 @@ class OverlayService : Service() {
         val binding = OverlayPanelBinding.inflate(inflater)
         panelBinding = binding
 
-        // Sync initial values from OffsetState
         binding.overlaySliderX.value = OffsetState.offsetX.toFloat().coerceIn(-300f, 300f)
         binding.overlaySliderY.value = OffsetState.offsetY.toFloat().coerceIn(-300f, 300f)
         binding.overlayTvX.text = OffsetState.offsetX.toString()
         binding.overlayTvY.text = OffsetState.offsetY.toString()
 
-        // Slider listeners
         binding.overlaySliderX.addOnChangeListener { _, value, _ ->
             OffsetState.offsetX = value.toInt()
             binding.overlayTvX.text = value.toInt().toString()
@@ -163,13 +140,11 @@ class OverlayService : Service() {
             broadcastOffsetChanged()
         }
 
-        // Stop button
         binding.overlayBtnStop.setOnClickListener {
             stopSelf()
             sendBroadcast(Intent(MainActivity.ACTION_SERVICE_STOPPED))
         }
 
-        // Collapse / expand
         binding.btnCollapse.setOnClickListener {
             if (isPanelExpanded) {
                 binding.expandableContent.visibility = View.GONE
@@ -177,12 +152,11 @@ class OverlayService : Service() {
                 isPanelExpanded = false
             } else {
                 binding.expandableContent.visibility = View.VISIBLE
-                binding.btnCollapse.text = "−"
+                binding.btnCollapse.text = "\u2212"
                 isPanelExpanded = true
             }
         }
 
-        // Drag the panel
         binding.overlayRoot.setOnTouchListener(makeDragListener(params, binding.overlayRoot))
 
         windowManager.addView(binding.root, params)
@@ -206,11 +180,17 @@ class OverlayService : Service() {
                     val dx = (event.rawX - touchInitialX).toInt()
                     val dy = (event.rawY - touchInitialY).toInt()
                     if (abs(dx) > 4 || abs(dy) > 4) {
-                        params.x = panelInitialX - dx   // END gravity: negative = move right
+                        params.x = panelInitialX - dx
                         params.y = panelInitialY + dy
-                        try { windowManager.updateViewLayout(rootView, params) } catch (_: Exception) {}
+                        try {
+                            windowManager.updateViewLayout(rootView, params)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "updateViewLayout: ${e.message}")
+                        }
                         true
-                    } else false
+                    } else {
+                        false
+                    }
                 }
                 else -> false
             }
@@ -219,7 +199,7 @@ class OverlayService : Service() {
 
     private fun removeControlPanel() {
         panelView?.let {
-            try { windowManager.removeView(it) } catch (e: Exception) {}
+            try { windowManager.removeView(it) } catch (e: Exception) { Log.w(TAG, "removePanel: ${e.message}") }
             panelView = null
         }
         panelBinding = null
@@ -263,11 +243,7 @@ class OverlayService : Service() {
             .setSmallIcon(android.R.drawable.ic_menu_edit)
             .setContentIntent(openIntent)
             .addAction(
-                Notification.Action.Builder(
-                    null,
-                    "Stop",
-                    stopIntent
-                ).build()
+                Notification.Action.Builder(null, "Stop", stopIntent).build()
             )
             .setOngoing(true)
             .build()
