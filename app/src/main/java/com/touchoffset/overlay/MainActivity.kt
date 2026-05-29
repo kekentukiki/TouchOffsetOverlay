@@ -1,5 +1,6 @@
 package com.touchoffset.overlay
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -41,7 +42,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setupSliders()
         setupButtons()
     }
@@ -56,13 +56,14 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(statusReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(statusReceiver, filter)
         }
     }
 
     override fun onPause() {
         super.onPause()
-        try { unregisterReceiver(statusReceiver) } catch (_: Exception) {}
+        try { unregisterReceiver(statusReceiver) } catch (e: Exception) { /* already unregistered */ }
     }
 
     // ─── Setup ────────────────────────────────────────────────────────────────
@@ -131,8 +132,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopOverlayService() {
-        val intent = Intent(this, OverlayService::class.java)
-        stopService(intent)
+        stopService(Intent(this, OverlayService::class.java))
         OffsetState.isServiceRunning = false
         updateUI()
     }
@@ -143,9 +143,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun isAccessibilityEnabled(): Boolean {
         val am = getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val list = am.getEnabledAccessibilityServiceList(
-            android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK
-        )
+        val list = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
         return list.any { it.id.contains(packageName) }
     }
 
@@ -154,6 +152,7 @@ class MainActivity : AppCompatActivity() {
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             Uri.parse("package:$packageName")
         )
+        @Suppress("DEPRECATION")
         startActivityForResult(intent, REQ_OVERLAY)
     }
 
@@ -161,6 +160,7 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
     }
 
+    @Suppress("DEPRECATION")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_OVERLAY) updateUI()
@@ -173,45 +173,30 @@ class MainActivity : AppCompatActivity() {
         val a11yOk = isAccessibilityEnabled()
         val running = OffsetState.isServiceRunning
 
-        // Permission statuses
-        binding.tvOverlayStatus.apply {
-            text = if (overlayOk) "✓ Overlay Permission" else "Overlay Permission"
-            setTextColor(if (overlayOk) getColor(R.color.active_green) else getColor(R.color.text_primary))
-        }
-        binding.btnGrantOverlay.apply {
-            text = if (overlayOk) "Granted" else "Grant"
-            isEnabled = !overlayOk
-        }
+        binding.tvOverlayStatus.text = if (overlayOk) "\u2713 Overlay Permission" else "Overlay Permission"
+        binding.tvOverlayStatus.setTextColor(
+            if (overlayOk) getColor(R.color.active_green) else getColor(R.color.text_primary)
+        )
+        binding.btnGrantOverlay.text = if (overlayOk) "Granted" else "Grant"
+        binding.btnGrantOverlay.isEnabled = !overlayOk
 
-        binding.tvAccessibilityStatus.apply {
-            text = if (a11yOk) "✓ Accessibility Service" else "Accessibility Service"
-            setTextColor(if (a11yOk) getColor(R.color.active_green) else getColor(R.color.text_primary))
-        }
-        binding.btnGrantAccessibility.apply {
-            text = if (a11yOk) "Enabled" else "Enable"
-            isEnabled = !a11yOk
-        }
+        binding.tvAccessibilityStatus.text = if (a11yOk) "\u2713 Accessibility Service" else "Accessibility Service"
+        binding.tvAccessibilityStatus.setTextColor(
+            if (a11yOk) getColor(R.color.active_green) else getColor(R.color.text_primary)
+        )
+        binding.btnGrantAccessibility.text = if (a11yOk) "Enabled" else "Enable"
+        binding.btnGrantAccessibility.isEnabled = !a11yOk
 
-        // Service toggle button
-        binding.btnToggleService.apply {
-            text = if (running) "Stop Overlay" else "Start Overlay"
-            setBackgroundColor(
-                if (running) getColor(R.color.inactive_gray)
-                else getColor(R.color.accent)
-            )
-        }
+        binding.btnToggleService.text = if (running) "Stop Overlay" else "Start Overlay"
+        binding.btnToggleService.setBackgroundColor(
+            if (running) getColor(R.color.inactive_gray) else getColor(R.color.accent)
+        )
 
-        // Status label
-        binding.tvServiceStatus.apply {
-            text = if (running) "● Active" else "○ Inactive"
-            setTextColor(
-                if (running) getColor(R.color.active_green)
-                else getColor(R.color.inactive_gray)
-            )
-        }
+        binding.tvServiceStatus.text = if (running) "\u25CF Active" else "\u25CB Inactive"
+        binding.tvServiceStatus.setTextColor(
+            if (running) getColor(R.color.active_green) else getColor(R.color.inactive_gray)
+        )
     }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private fun showDialog(title: String, message: String, onConfirm: () -> Unit) {
         MaterialAlertDialogBuilder(this)
