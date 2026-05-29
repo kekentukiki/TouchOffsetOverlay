@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Touch Offset Overlay</string>
+    <string name="accessibility_service_label">Touch Offset Overlay Service</string>
+    <string name="accessibility_service_description">Intercepts touch events and re-dispatches them with a configurable X/Y offset, allowing touch coordinates to be shifted for drawing assistance.</string>
+    <string name="grant_overlay_permission">Grant Overlay Permission</string>
+    <string name="enable_accessibility">Enable Accessibility Service</string>
+    <string name="start_service">Start Overlay</string>
+    <string name="stop_service">Stop Overlay</string>
+    <string name="offset_x_label">X Offset</string>
+    <string name="offset_y_label">Y Offset</string>
+    <string name="status_active">● Active</string>
+    <string name="status_inactive">○ Inactive</string>
+    <string name="permission_overlay_required">Overlay permission is required for the floating panel.</string>
+    <string name="accessibility_required">Accessibility service must be enabled to intercept and shift touches.</string>
+    <string name="channel_name">Touch Offset Overlay</string>
+    <string name="channel_description">Running overlay service</string>
+    <string name="notification_title">Touch Offset Active</string>
+    <string name="notification_text">Tap to open controls</string>
+</resources>
