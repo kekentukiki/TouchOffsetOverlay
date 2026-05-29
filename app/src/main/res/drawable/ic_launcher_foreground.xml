@@ -4,13 +4,10 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Crosshair / offset touch icon -->
     <path
         android:fillColor="#BB86FC"
         android:pathData="M54,20 C55.1,20 56,20.9 56,22 L56,50 L84,50 C85.1,50 86,50.9 86,52 L86,56 C86,57.1 85.1,58 84,58 L56,58 L56,86 C56,87.1 55.1,88 54,88 L52,88 C50.9,88 50,87.1 50,86 L50,58 L22,58 C20.9,58 20,57.1 20,56 L20,52 C20,50.9 20.9,50 22,50 L50,50 L50,22 C50,20.9 50.9,20 52,20 Z" />
-    <circle
+    <path
         android:fillColor="#BB86FC"
-        android:cx="54"
-        android:cy="54"
-        android:r="8" />
+        android:pathData="M46,54 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
 </vector>
