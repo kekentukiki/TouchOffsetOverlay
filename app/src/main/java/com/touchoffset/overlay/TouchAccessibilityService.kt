@@ -24,13 +24,13 @@ class TouchAccessibilityService : AccessibilityService() {
         private var lastOy = 0f
 
         /**
-         * Call this for every ACTION_DOWN / ACTION_MOVE / ACTION_UP event.
-         * Builds a continuous gesture stroke so drawing apps receive a real drag.
+         * Call for every ACTION_DOWN / MOVE / UP. Builds a continuous stroke.
+         * density: displayMetrics.density so offset is in dp, consistent across DPI settings.
          */
-        fun handleTouchEvent(rawX: Float, rawY: Float, action: Int) {
+        fun handleTouchEvent(rawX: Float, rawY: Float, action: Int, density: Float = 1f) {
             val svc = instance ?: return
-            val ox = rawX + OffsetState.offsetX
-            val oy = rawY + OffsetState.offsetY
+            val ox = rawX + (OffsetState.offsetX * density)
+            val oy = rawY + (OffsetState.offsetY * density)
 
             when (action) {
                 MotionEvent.ACTION_DOWN -> {
