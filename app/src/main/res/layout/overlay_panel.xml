@@ -48,7 +48,7 @@
             android:id="@+id/btnToggleCapture"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:text="● INTERCEPT OFF"
+            android:text="▶ MULAI OFFSET (sekarang: mati)"
             android:textSize="12sp"
             app:cornerRadius="8dp"
             app:backgroundTint="#333355"
