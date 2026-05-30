@@ -10,24 +10,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Touch Offset Overlay"
             android:textColor="@color/text_primary"
-            android:textSize="26sp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="2dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Shift touch coordinates for precision drawing"
             android:textColor="@color/text_secondary"
-            android:textSize="14sp"
-            android:layout_marginBottom="32dp" />
+            android:textSize="13sp"
+            android:layout_marginBottom="20dp" />
 
         <!-- Permissions Card -->
         <com.google.android.material.card.MaterialCardView
@@ -36,83 +36,59 @@
             app:cardBackgroundColor="@color/bg_surface"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            android:layout_marginBottom="16dp">
-
+            android:layout_marginBottom="14dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
-
+                android:padding="18dp">
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="PERMISSIONS"
                     android:textColor="@color/accent"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:letterSpacing="0.1"
                     android:textStyle="bold"
-                    android:layout_marginBottom="16dp" />
-
+                    android:layout_marginBottom="14dp" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:id="@+id/tvOverlayStatus"
-                        android:layout_width="0dp"
+                    android:layout_marginBottom="10dp">
+                    <TextView android:id="@+id/tvOverlayStatus"
+                        android:layout_width="0dp" android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="Overlay Permission"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp" />
-
+                        android:textColor="@color/text_primary" android:textSize="14sp" />
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnGrantOverlay"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:text="Grant"
-                        android:textSize="13sp"
+                        android:layout_width="wrap_content" android:layout_height="34dp"
+                        android:text="Grant" android:textSize="12sp"
                         app:cornerRadius="8dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        app:strokeColor="@color/accent"
-                        android:textColor="@color/accent" />
+                        app:strokeColor="@color/accent" android:textColor="@color/accent" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/divider"
-                    android:layout_marginBottom="12dp" />
-
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="@color/divider" android:layout_marginBottom="10dp" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
-
-                    <TextView
-                        android:id="@+id/tvAccessibilityStatus"
-                        android:layout_width="0dp"
+                    <TextView android:id="@+id/tvAccessibilityStatus"
+                        android:layout_width="0dp" android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="Accessibility Service"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp" />
-
+                        android:textColor="@color/text_primary" android:textSize="14sp" />
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnGrantAccessibility"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:text="Enable"
-                        android:textSize="13sp"
+                        android:layout_width="wrap_content" android:layout_height="34dp"
+                        android:text="Enable" android:textSize="12sp"
                         app:cornerRadius="8dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        app:strokeColor="@color/accent"
-                        android:textColor="@color/accent" />
+                        app:strokeColor="@color/accent" android:textColor="@color/accent" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -124,208 +100,204 @@
             app:cardBackgroundColor="@color/bg_surface"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            android:layout_marginBottom="16dp">
-
+            android:layout_marginBottom="14dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="18dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="OFFSET CONTROLS"
                     android:textColor="@color/accent"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:letterSpacing="0.1"
                     android:textStyle="bold"
-                    android:layout_marginBottom="20dp" />
+                    android:layout_marginBottom="16dp" />
 
-                <!-- X Offset -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="6dp">
-
-                    <TextView
-                        android:layout_width="0dp"
+                <!-- X slider -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+                    <TextView android:layout_width="0dp" android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="X Offset"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/tvOffsetX"
-                        android:layout_width="60dp"
-                        android:layout_height="wrap_content"
-                        android:text="0 px"
-                        android:textColor="@color/accent"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:gravity="end" />
+                        android:text="X Offset" android:textColor="@color/text_primary" android:textSize="14sp" />
+                    <TextView android:id="@+id/tvOffsetX"
+                        android:layout_width="56dp" android:layout_height="wrap_content"
+                        android:text="0 px" android:textColor="@color/accent"
+                        android:textSize="14sp" android:textStyle="bold" android:gravity="end" />
                 </LinearLayout>
-
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderX"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:valueFrom="-300"
-                    android:valueTo="300"
-                    android:value="0"
-                    android:stepSize="1"
-                    app:thumbColor="@color/accent"
-                    app:trackColorActive="@color/accent"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:valueFrom="-400" android:valueTo="400" android:value="0" android:stepSize="1"
+                    app:thumbColor="@color/accent" app:trackColorActive="@color/accent"
                     app:trackColorInactive="@color/bg_elevated"
-                    android:layout_marginBottom="20dp" />
+                    android:layout_marginBottom="16dp" />
 
-                <!-- Y Offset -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="6dp">
-
-                    <TextView
-                        android:layout_width="0dp"
+                <!-- Y slider -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+                    <TextView android:layout_width="0dp" android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Y Offset"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/tvOffsetY"
-                        android:layout_width="60dp"
-                        android:layout_height="wrap_content"
-                        android:text="0 px"
-                        android:textColor="@color/accent"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:gravity="end" />
+                        android:text="Y Offset" android:textColor="@color/text_primary" android:textSize="14sp" />
+                    <TextView android:id="@+id/tvOffsetY"
+                        android:layout_width="56dp" android:layout_height="wrap_content"
+                        android:text="0 px" android:textColor="@color/accent"
+                        android:textSize="14sp" android:textStyle="bold" android:gravity="end" />
                 </LinearLayout>
-
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderY"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:valueFrom="-300"
-                    android:valueTo="300"
-                    android:value="0"
-                    android:stepSize="1"
-                    app:thumbColor="@color/accent"
-                    app:trackColorActive="@color/accent"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:valueFrom="-400" android:valueTo="400" android:value="0" android:stepSize="1"
+                    app:thumbColor="@color/accent" app:trackColorActive="@color/accent"
                     app:trackColorInactive="@color/bg_elevated" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnResetOffsets"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Reset to 0"
-                    android:layout_gravity="end"
-                    android:layout_marginTop="12dp"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Reset to 0" android:layout_gravity="end" android:layout_marginTop="10dp"
                     app:cornerRadius="8dp"
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Service Toggle Card -->
+        <!-- Test Sketch Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="@color/bg_surface"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            android:layout_marginBottom="16dp">
-
+            android:layout_marginBottom="14dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="18dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="10dp">
 
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_height="wrap_content"
                         android:orientation="vertical">
-
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="SERVICE STATUS"
+                            android:text="TEST CANVAS"
                             android:textColor="@color/accent"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:letterSpacing="0.1"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:id="@+id/tvServiceStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="○ Inactive"
-                            android:textColor="@color/inactive_gray"
-                            android:textSize="16sp"
                             android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="⬜ finger  ⬜ → 🟣 offset"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
                     </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnClearSketch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="Clear"
+                        android:textSize="12sp"
+                        app:cornerRadius="8dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        app:strokeColor="@color/accent"
+                        android:textColor="@color/accent" />
                 </LinearLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnToggleService"
+                <com.touchoffset.overlay.TestSketchView
+                    android:id="@+id/testSketch"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:text="Start Overlay"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="12dp"
-                    app:backgroundTint="@color/accent" />
+                    android:layout_height="200dp" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Info Card -->
+        <!-- Service Toggle -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/bg_surface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            android:layout_marginBottom="14dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="14dp">
+                    <LinearLayout
+                        android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="SERVICE STATUS"
+                            android:textColor="@color/accent" android:textSize="11sp"
+                            android:letterSpacing="0.1" android:textStyle="bold"
+                            android:layout_marginBottom="4dp" />
+                        <TextView
+                            android:id="@+id/tvServiceStatus"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="○ Inactive"
+                            android:textColor="@color/inactive_gray" android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnToggleService"
+                    android:layout_width="match_parent" android:layout_height="52dp"
+                    android:text="Start Overlay" android:textSize="15sp" android:textStyle="bold"
+                    app:cornerRadius="12dp" app:backgroundTint="@color/accent" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- How it works -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="@color/bg_surface"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp">
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
-
+                android:padding="18dp">
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="HOW IT WORKS"
+                    android:text="HOW TO USE"
                     android:textColor="@color/accent"
-                    android:textSize="12sp"
-                    android:letterSpacing="0.1"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
-
+                    android:textSize="11sp" android:letterSpacing="0.1"
+                    android:textStyle="bold" android:layout_marginBottom="10dp" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="1. Grant overlay and accessibility permissions above.\n\n2. Set your desired X/Y offset in pixels.\n   • Positive X → shifts touch right\n   • Negative X → shifts touch left\n   • Positive Y → shifts touch down\n   • Negative Y → shifts touch up\n\n3. Tap Start Overlay. A floating ● dot appears on screen.\n\n4. When active, every touch is re-dispatched at (touch + offset). Useful for digital drawing — offset for pen nib correction or stylus drift."
+                    android:text="1. Grant both permissions above.\n\n2. Set X/Y offset with sliders, or use the floating panel arrows after starting.\n\n3. Test in the canvas above — white = finger, purple = where touch lands.\n\n4. Tap Start Overlay.\n\n5. In the floating panel: tap ● INTERCEPT OFF to enable touch shifting. While ON, your real touches are captured and re-sent at the offset position.\n\n   ⚠ While INTERCEPT is ON the screen only responds to the offset touch — tap INTERCEPT again or Stop to regain normal control."
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
-                    android:lineSpacingMultiplier="1.4" />
+                    android:textSize="13sp" android:lineSpacingMultiplier="1.4" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
