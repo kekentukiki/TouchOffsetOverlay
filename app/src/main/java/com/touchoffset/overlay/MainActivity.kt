@@ -31,8 +31,12 @@ class MainActivity : AppCompatActivity() {
                 ACTION_OFFSET_CHANGED -> {
                     val x = intent.getIntExtra("offsetX", 0)
                     val y = intent.getIntExtra("offsetY", 0)
-                    binding.sliderX.value = x.toFloat()
-                    binding.sliderY.value = y.toFloat()
+                    // update sliders without triggering listeners
+                    binding.sliderX.value = x.toFloat().coerceIn(-400f, 400f)
+                    binding.sliderY.value = y.toFloat().coerceIn(-400f, 400f)
+                    binding.tvOffsetX.text = "$x px"
+                    binding.tvOffsetY.text = "$y px"
+                    syncSketch()
                 }
             }
         }
@@ -63,62 +67,66 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        try { unregisterReceiver(statusReceiver) } catch (e: Exception) { /* already unregistered */ }
+        try { unregisterReceiver(statusReceiver) } catch (_: Exception) {}
     }
 
-    // ─── Setup ────────────────────────────────────────────────────────────────
+    // ─── Sliders ──────────────────────────────────────────────────────────────
 
     private fun setupSliders() {
-        binding.sliderX.value = OffsetState.offsetX.toFloat().coerceIn(-300f, 300f)
-        binding.sliderY.value = OffsetState.offsetY.toFloat().coerceIn(-300f, 300f)
+        binding.sliderX.value = OffsetState.offsetX.toFloat().coerceIn(-400f, 400f)
+        binding.sliderY.value = OffsetState.offsetY.toFloat().coerceIn(-400f, 400f)
         binding.tvOffsetX.text = "${OffsetState.offsetX} px"
         binding.tvOffsetY.text = "${OffsetState.offsetY} px"
 
         binding.sliderX.addOnChangeListener { _, value, _ ->
-            val v = value.toInt()
-            OffsetState.offsetX = v
-            binding.tvOffsetX.text = "$v px"
+            OffsetState.offsetX = value.toInt()
+            binding.tvOffsetX.text = "${value.toInt()} px"
+            syncSketch()
         }
         binding.sliderY.addOnChangeListener { _, value, _ ->
-            val v = value.toInt()
-            OffsetState.offsetY = v
-            binding.tvOffsetY.text = "$v px"
+            OffsetState.offsetY = value.toInt()
+            binding.tvOffsetY.text = "${value.toInt()} px"
+            syncSketch()
         }
-
         binding.btnResetOffsets.setOnClickListener {
             binding.sliderX.value = 0f
             binding.sliderY.value = 0f
-            OffsetState.offsetX = 0
-            OffsetState.offsetY = 0
-            binding.tvOffsetX.text = "0 px"
-            binding.tvOffsetY.text = "0 px"
+            OffsetState.offsetX = 0; OffsetState.offsetY = 0
+            binding.tvOffsetX.text = "0 px"; binding.tvOffsetY.text = "0 px"
+            syncSketch()
         }
     }
+
+    // ─── Sketch sync ──────────────────────────────────────────────────────────
+
+    private fun syncSketch() {
+        binding.testSketch.shiftX = OffsetState.offsetX
+        binding.testSketch.shiftY = OffsetState.offsetY
+    }
+
+    // ─── Buttons ──────────────────────────────────────────────────────────────
 
     private fun setupButtons() {
         binding.btnGrantOverlay.setOnClickListener { requestOverlayPermission() }
         binding.btnGrantAccessibility.setOnClickListener { openAccessibilitySettings() }
         binding.btnToggleService.setOnClickListener { toggleService() }
+        binding.btnClearSketch.setOnClickListener { binding.testSketch.clear() }
     }
 
-    // ─── Service toggle ───────────────────────────────────────────────────────
+    // ─── Service ──────────────────────────────────────────────────────────────
 
     private fun toggleService() {
         if (OffsetState.isServiceRunning) {
             stopOverlayService()
         } else {
             if (!hasOverlayPermission()) {
-                showDialog(
-                    "Overlay Permission Required",
-                    getString(R.string.permission_overlay_required)
-                ) { requestOverlayPermission() }
+                showDialog("Overlay Permission Required",
+                    getString(R.string.permission_overlay_required)) { requestOverlayPermission() }
                 return
             }
             if (!isAccessibilityEnabled()) {
-                showDialog(
-                    "Accessibility Service Required",
-                    getString(R.string.accessibility_required)
-                ) { openAccessibilitySettings() }
+                showDialog("Accessibility Service Required",
+                    getString(R.string.accessibility_required)) { openAccessibilitySettings() }
                 return
             }
             startOverlayService()
@@ -126,8 +134,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startOverlayService() {
-        val intent = Intent(this, OverlayService::class.java)
-        startForegroundService(intent)
+        startForegroundService(Intent(this, OverlayService::class.java))
         updateUI()
     }
 
@@ -143,17 +150,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun isAccessibilityEnabled(): Boolean {
         val am = getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val list = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        return list.any { it.id.contains(packageName) }
+        return am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+            .any { it.id.contains(packageName) }
     }
 
     private fun requestOverlayPermission() {
-        val intent = Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName")
-        )
         @Suppress("DEPRECATION")
-        startActivityForResult(intent, REQ_OVERLAY)
+        startActivityForResult(
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")),
+            REQ_OVERLAY
+        )
     }
 
     private fun openAccessibilitySettings() {
@@ -173,37 +179,33 @@ class MainActivity : AppCompatActivity() {
         val a11yOk = isAccessibilityEnabled()
         val running = OffsetState.isServiceRunning
 
-        binding.tvOverlayStatus.text = if (overlayOk) "\u2713 Overlay Permission" else "Overlay Permission"
+        binding.tvOverlayStatus.text = if (overlayOk) "✓ Overlay Permission" else "Overlay Permission"
         binding.tvOverlayStatus.setTextColor(
-            if (overlayOk) getColor(R.color.active_green) else getColor(R.color.text_primary)
-        )
+            if (overlayOk) getColor(R.color.active_green) else getColor(R.color.text_primary))
         binding.btnGrantOverlay.text = if (overlayOk) "Granted" else "Grant"
         binding.btnGrantOverlay.isEnabled = !overlayOk
 
-        binding.tvAccessibilityStatus.text = if (a11yOk) "\u2713 Accessibility Service" else "Accessibility Service"
+        binding.tvAccessibilityStatus.text = if (a11yOk) "✓ Accessibility Service" else "Accessibility Service"
         binding.tvAccessibilityStatus.setTextColor(
-            if (a11yOk) getColor(R.color.active_green) else getColor(R.color.text_primary)
-        )
+            if (a11yOk) getColor(R.color.active_green) else getColor(R.color.text_primary))
         binding.btnGrantAccessibility.text = if (a11yOk) "Enabled" else "Enable"
         binding.btnGrantAccessibility.isEnabled = !a11yOk
 
         binding.btnToggleService.text = if (running) "Stop Overlay" else "Start Overlay"
         binding.btnToggleService.setBackgroundColor(
-            if (running) getColor(R.color.inactive_gray) else getColor(R.color.accent)
-        )
+            if (running) getColor(R.color.inactive_gray) else getColor(R.color.accent))
 
-        binding.tvServiceStatus.text = if (running) "\u25CF Active" else "\u25CB Inactive"
+        binding.tvServiceStatus.text = if (running) "● Active" else "○ Inactive"
         binding.tvServiceStatus.setTextColor(
-            if (running) getColor(R.color.active_green) else getColor(R.color.inactive_gray)
-        )
+            if (running) getColor(R.color.active_green) else getColor(R.color.inactive_gray))
+
+        syncSketch()
     }
 
     private fun showDialog(title: String, message: String, onConfirm: () -> Unit) {
         MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setMessage(message)
+            .setTitle(title).setMessage(message)
             .setPositiveButton("Open Settings") { _, _ -> onConfirm() }
-            .setNegativeButton("Cancel", null)
-            .show()
+            .setNegativeButton("Cancel", null).show()
     }
 }
