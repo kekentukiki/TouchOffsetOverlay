@@ -27,16 +27,21 @@ class OverlayService : Service() {
     }
 
     private lateinit var windowManager: WindowManager
-    private var touchCaptureView: View? = null
+
+    // Touch capture overlay (fullscreen, intercepts touches when active)
+    private var captureView: View? = null
+    private lateinit var captureParams: WindowManager.LayoutParams
+    private var isCapturing = false
+
+    // Floating control panel
     private var panelView: View? = null
     private var panelBinding: OverlayPanelBinding? = null
     private var isPanelExpanded = true
     private var step = 5
 
-    private var panelInitialX = 0
-    private var panelInitialY = 0
-    private var touchInitialX = 0f
-    private var touchInitialY = 0f
+    // Drag state for panel
+    private var panelParamsX = 0; private var panelParamsY = 0
+    private var touchRawX = 0f; private var touchRawY = 0f
     private var isDragging = false
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -46,16 +51,14 @@ class OverlayService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification())
-        try {
-            addTouchCaptureOverlay()
-        } catch (e: Exception) {
-            Log.e(TAG, "Touch overlay failed: ${e.message}")
+
+        try { setupCaptureOverlay() } catch (e: Exception) {
+            Log.e(TAG, "Capture overlay error: ${e.message}")
         }
-        try {
-            addControlPanel()
-        } catch (e: Exception) {
-            Log.e(TAG, "Control panel failed: ${e.message}")
+        try { addControlPanel() } catch (e: Exception) {
+            Log.e(TAG, "Control panel error: ${e.message}")
         }
+
         OffsetState.isServiceRunning = true
         Log.d(TAG, "OverlayService started")
     }
@@ -67,44 +70,67 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         OffsetState.isServiceRunning = false
-        removeTouchCaptureOverlay()
-        removeControlPanel()
+        captureView?.let { try { windowManager.removeView(it) } catch (_: Exception) {} }
+        panelView?.let  { try { windowManager.removeView(it) } catch (_: Exception) {} }
         super.onDestroy()
     }
 
-    // ─── Transparent fullscreen touch capture ─────────────────────────────────
+    // ─── Touch capture overlay ─────────────────────────────────────────────────
 
-    private fun addTouchCaptureOverlay() {
-        val params = WindowManager.LayoutParams(
+    private fun setupCaptureOverlay() {
+        captureParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            // Start NON-TOUCHABLE: touches pass through; user enables interception via button
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
             PixelFormat.TRANSPARENT
         ).apply { gravity = Gravity.TOP or Gravity.START }
 
-        val capture = View(this)
-        capture.setBackgroundColor(0x00000000)
-        capture.setOnTouchListener { _, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                TouchAccessibilityService.dispatchOffsetTouch(event.rawX, event.rawY)
+        val view = View(this)
+        view.setBackgroundColor(0x00000000)
+        view.setOnTouchListener { _, event ->
+            // Consume touch and dispatch offset version
+            if (event.actionMasked == MotionEvent.ACTION_DOWN ||
+                event.actionMasked == MotionEvent.ACTION_MOVE ||
+                event.actionMasked == MotionEvent.ACTION_UP) {
+                TouchAccessibilityService.dispatchOffsetTouch(
+                    event.rawX, event.rawY, event.actionMasked
+                )
             }
-            false
+            true  // consume so only offset touch reaches the app
         }
-        windowManager.addView(capture, params)
-        touchCaptureView = capture
+        windowManager.addView(view, captureParams)
+        captureView = view
     }
 
-    private fun removeTouchCaptureOverlay() {
-        touchCaptureView?.let {
-            try { windowManager.removeView(it) } catch (e: Exception) { /* ignore */ }
-            touchCaptureView = null
+    private fun setCapturing(enabled: Boolean) {
+        isCapturing = enabled
+        val flags = if (enabled) {
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+            // No FLAG_NOT_TOUCHABLE → overlay intercepts touches
+        } else {
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            // FLAG_NOT_TOUCHABLE → overlay is invisible to touch system
+        }
+        captureParams.flags = flags
+        captureView?.let { try { windowManager.updateViewLayout(it, captureParams) } catch (e: Exception) {
+            Log.e(TAG, "updateViewLayout: ${e.message}")
+        }}
+        panelBinding?.btnToggleCapture?.let { btn ->
+            btn.text = if (enabled) "● INTERCEPT ON" else "● INTERCEPT OFF"
+            btn.setBackgroundColor(
+                if (enabled) 0xFFCF6679.toInt() else 0xFF333355.toInt()
+            )
         }
     }
 
-    // ─── Floating control panel ────────────────────────────────────────────────
+    // ─── Floating panel ────────────────────────────────────────────────────────
 
     private fun addControlPanel() {
         val params = WindowManager.LayoutParams(
@@ -113,53 +139,37 @@ class OverlayService : Service() {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.END
-            x = 16
-            y = 120
-        }
+        ).apply { gravity = Gravity.TOP or Gravity.END; x = 16; y = 100 }
 
         val binding = OverlayPanelBinding.inflate(LayoutInflater.from(this))
         panelBinding = binding
 
-        updatePanelDisplay(binding)
+        refreshDisplay(binding)
 
-        // Arrow buttons
-        binding.btnUp.setOnClickListener    { changeOffset(0, -step);  updatePanelDisplay(binding) }
-        binding.btnDown.setOnClickListener  { changeOffset(0, +step);  updatePanelDisplay(binding) }
-        binding.btnLeft.setOnClickListener  { changeOffset(-step, 0);  updatePanelDisplay(binding) }
-        binding.btnRight.setOnClickListener { changeOffset(+step, 0);  updatePanelDisplay(binding) }
+        // Intercept toggle
+        binding.btnToggleCapture.setOnClickListener { setCapturing(!isCapturing) }
+
+        // Arrows
+        binding.btnUp.setOnClickListener    { nudge(0, -step) }
+        binding.btnDown.setOnClickListener  { nudge(0, +step) }
+        binding.btnLeft.setOnClickListener  { nudge(-step, 0) }
+        binding.btnRight.setOnClickListener { nudge(+step, 0) }
         binding.btnReset.setOnClickListener {
             OffsetState.offsetX = 0; OffsetState.offsetY = 0
-            updatePanelDisplay(binding)
-            broadcastOffsetChanged()
+            refreshDisplay(binding); broadcast()
         }
 
-        // Step size buttons
-        listOf(
-            binding.btnStep1  to 1,
-            binding.btnStep5  to 5,
-            binding.btnStep10 to 10,
-            binding.btnStep20 to 20
-        ).forEach { (btn, s) ->
-            btn.setOnClickListener {
-                step = s
-                highlightStep(binding, s)
-            }
-        }
-        highlightStep(binding, step)
+        // Step
+        listOf(binding.btnStep1 to 1, binding.btnStep5 to 5,
+               binding.btnStep10 to 10, binding.btnStep20 to 20)
+            .forEach { (btn, s) -> btn.setOnClickListener { step = s; highlightStep(binding) } }
+        highlightStep(binding)
 
-        // Collapse / expand
+        // Collapse
         binding.btnCollapse.setOnClickListener {
-            if (isPanelExpanded) {
-                binding.expandableContent.visibility = View.GONE
-                binding.btnCollapse.text = "+"
-                isPanelExpanded = false
-            } else {
-                binding.expandableContent.visibility = View.VISIBLE
-                binding.btnCollapse.text = "\u2212"
-                isPanelExpanded = true
-            }
+            isPanelExpanded = !isPanelExpanded
+            binding.expandableContent.visibility = if (isPanelExpanded) View.VISIBLE else View.GONE
+            binding.btnCollapse.text = if (isPanelExpanded) "\u2212" else "+"
         }
 
         // Stop
@@ -168,111 +178,90 @@ class OverlayService : Service() {
             sendBroadcast(Intent(MainActivity.ACTION_SERVICE_STOPPED))
         }
 
-        // Drag
-        binding.overlayRoot.setOnTouchListener(makeDragListener(params, binding.overlayRoot))
+        // Drag (on header area = the root itself but only when not clicking buttons)
+        binding.overlayRoot.setOnTouchListener(dragListener(params, binding.overlayRoot))
 
         windowManager.addView(binding.root, params)
         panelView = binding.root
     }
 
-    private fun changeOffset(dx: Int, dy: Int) {
-        OffsetState.offsetX = (OffsetState.offsetX + dx).coerceIn(-300, 300)
-        OffsetState.offsetY = (OffsetState.offsetY + dy).coerceIn(-300, 300)
-        broadcastOffsetChanged()
+    private fun nudge(dx: Int, dy: Int) {
+        OffsetState.offsetX = (OffsetState.offsetX + dx).coerceIn(-400, 400)
+        OffsetState.offsetY = (OffsetState.offsetY + dy).coerceIn(-400, 400)
+        panelBinding?.let { refreshDisplay(it) }
+        broadcast()
     }
 
-    private fun updatePanelDisplay(binding: OverlayPanelBinding) {
-        binding.overlayTvX.text = OffsetState.offsetX.toString()
-        binding.overlayTvY.text = OffsetState.offsetY.toString()
-        binding.offsetPreview.offsetX = OffsetState.offsetX
-        binding.offsetPreview.offsetY = OffsetState.offsetY
+    private fun refreshDisplay(b: OverlayPanelBinding) {
+        b.overlayTvX.text = OffsetState.offsetX.toString()
+        b.overlayTvY.text = OffsetState.offsetY.toString()
+        // Use shiftX/shiftY (renamed props in OffsetPreviewView to avoid View conflicts)
+        b.offsetPreview.shiftX = OffsetState.offsetX
+        b.offsetPreview.shiftY = OffsetState.offsetY
     }
 
-    private fun highlightStep(binding: OverlayPanelBinding, active: Int) {
-        mapOf(
-            binding.btnStep1  to 1,
-            binding.btnStep5  to 5,
-            binding.btnStep10 to 10,
-            binding.btnStep20 to 20
-        ).forEach { (btn, s) ->
-            btn.setTextColor(
-                if (s == active) resources.getColor(R.color.accent, null)
-                else 0xFFFFFFFF.toInt()
-            )
-        }
+    private fun highlightStep(b: OverlayPanelBinding) {
+        val accent = resources.getColor(R.color.accent, null)
+        val white = 0xFFFFFFFF.toInt()
+        listOf(b.btnStep1 to 1, b.btnStep5 to 5, b.btnStep10 to 10, b.btnStep20 to 20)
+            .forEach { (btn, s) -> btn.setTextColor(if (s == step) accent else white) }
     }
 
-    private fun makeDragListener(
-        params: WindowManager.LayoutParams,
-        rootView: View
-    ): View.OnTouchListener {
-        return View.OnTouchListener { _, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    panelInitialX = params.x
-                    panelInitialY = params.y
-                    touchInitialX = event.rawX
-                    touchInitialY = event.rawY
-                    isDragging = false
-                    false
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = (event.rawX - touchInitialX).toInt()
-                    val dy = (event.rawY - touchInitialY).toInt()
-                    if (isDragging || abs(dx) > 8 || abs(dy) > 8) {
-                        isDragging = true
-                        params.x = panelInitialX - dx
-                        params.y = panelInitialY + dy
-                        try { windowManager.updateViewLayout(rootView, params) } catch (e: Exception) { /* ignore */ }
-                        true
-                    } else false
-                }
-                MotionEvent.ACTION_UP -> { val wasDragging = isDragging; isDragging = false; wasDragging }
-                else -> false
-            }
-        }
-    }
-
-    private fun removeControlPanel() {
-        panelView?.let {
-            try { windowManager.removeView(it) } catch (e: Exception) { /* ignore */ }
-            panelView = null
-        }
-        panelBinding = null
-    }
-
-    private fun broadcastOffsetChanged() {
+    private fun broadcast() {
         sendBroadcast(Intent(MainActivity.ACTION_OFFSET_CHANGED).apply {
             putExtra("offsetX", OffsetState.offsetX)
             putExtra("offsetY", OffsetState.offsetY)
         })
     }
 
+    private fun dragListener(
+        params: WindowManager.LayoutParams,
+        root: View
+    ) = View.OnTouchListener { _, e ->
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                panelParamsX = params.x; panelParamsY = params.y
+                touchRawX = e.rawX; touchRawY = e.rawY
+                isDragging = false; false
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val dx = (e.rawX - touchRawX).toInt()
+                val dy = (e.rawY - touchRawY).toInt()
+                if (isDragging || abs(dx) > 8 || abs(dy) > 8) {
+                    isDragging = true
+                    params.x = panelParamsX - dx
+                    params.y = panelParamsY + dy
+                    try { windowManager.updateViewLayout(root, params) } catch (_: Exception) {}
+                    true
+                } else false
+            }
+            MotionEvent.ACTION_UP -> { val was = isDragging; isDragging = false; was }
+            else -> false
+        }
+    }
+
     // ─── Notification ─────────────────────────────────────────────────────────
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
+        val ch = NotificationChannel(
             CHANNEL_ID, getString(R.string.channel_name), NotificationManager.IMPORTANCE_LOW
-        ).apply { description = getString(R.string.channel_description); setShowBadge(false) }
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        ).apply { setShowBadge(false) }
+        getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
     }
 
     private fun buildNotification(): Notification {
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
-        )
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(
             this, 1,
             Intent(this, OverlayService::class.java).apply { action = ACTION_STOP },
-            PendingIntent.FLAG_IMMUTABLE
-        )
+            PendingIntent.FLAG_IMMUTABLE)
         return Notification.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.notification_title))
             .setContentText(getString(R.string.notification_text))
             .setSmallIcon(android.R.drawable.ic_menu_edit)
             .setContentIntent(open)
             .addAction(Notification.Action.Builder(null, "Stop", stop).build())
-            .setOngoing(true)
-            .build()
+            .setOngoing(true).build()
     }
 }
