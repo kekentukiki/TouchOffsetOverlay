@@ -59,6 +59,9 @@ class OverlayService : Service() {
             Log.e(TAG, "Control panel error: ${e.message}")
         }
 
+        // Auto-start interception immediately — user doesn't need to press anything
+        setCapturing(true)
+
         OffsetState.isServiceRunning = true
         Log.d(TAG, "OverlayService started")
     }
