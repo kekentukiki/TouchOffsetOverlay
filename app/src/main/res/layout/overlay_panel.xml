@@ -4,23 +4,23 @@
     android:id="@+id/overlayRoot"
     android:layout_width="220dp"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     android:background="@drawable/overlay_panel_bg"
-    android:padding="12dp"
+    android:orientation="vertical"
+    android:padding="10dp"
     android:elevation="12dp">
 
-    <!-- Header / drag handle -->
+    <!-- Header (drag handle + collapse) -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="28dp"
+        android:layout_height="32dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:text="⊕ Touch Offset"
             android:textColor="#FFFFFFFF"
             android:textSize="13sp"
@@ -28,215 +28,118 @@
 
         <TextView
             android:id="@+id/btnCollapse"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:text="−"
             android:textColor="#BBFFFFFF"
             android:textSize="20sp"
             android:gravity="center" />
     </LinearLayout>
 
-    <!-- Expandable content -->
+    <!-- Collapsible body -->
     <LinearLayout
         android:id="@+id/expandableContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- ON / OFF intercept toggle (prominent) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnToggleCapture"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="● INTERCEPT OFF"
+            android:textSize="12sp"
+            app:cornerRadius="8dp"
+            app:backgroundTint="#333355"
+            android:layout_marginBottom="8dp" />
+
         <!-- Crosshair preview -->
         <com.touchoffset.overlay.OffsetPreviewView
             android:id="@+id/offsetPreview"
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:layout_marginBottom="8dp" />
+            android:layout_height="130dp"
+            android:layout_marginBottom="6dp" />
 
-        <!-- Coordinates display -->
+        <!-- X / Y coordinates -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="X: "
-                android:textColor="#BBFFFFFF"
-                android:textSize="13sp" />
-            <TextView
-                android:id="@+id/overlayTvX"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="#BB86FC"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:minWidth="32dp"
-                android:gravity="center" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="    Y: "
-                android:textColor="#BBFFFFFF"
-                android:textSize="13sp" />
-            <TextView
-                android:id="@+id/overlayTvY"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="#BB86FC"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:minWidth="32dp"
-                android:gravity="center" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="X: " android:textColor="#BBFFFFFF" android:textSize="13sp" />
+            <TextView android:id="@+id/overlayTvX"
+                android:layout_width="36dp" android:layout_height="wrap_content"
+                android:gravity="center" android:text="0"
+                android:textColor="#BB86FC" android:textSize="13sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="  Y: " android:textColor="#BBFFFFFF" android:textSize="13sp" />
+            <TextView android:id="@+id/overlayTvY"
+                android:layout_width="36dp" android:layout_height="wrap_content"
+                android:gravity="center" android:text="0"
+                android:textColor="#BB86FC" android:textSize="13sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Arrow pad: Up -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+        <!-- Arrow UP -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:gravity="center">
-            <TextView
-                android:id="@+id/btnUp"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="▲"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg" />
+            <TextView android:id="@+id/btnUp" android:layout_width="48dp" android:layout_height="48dp"
+                android:text="▲" android:textSize="22sp" android:textColor="#FFFFFF"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" />
         </LinearLayout>
 
-        <!-- Arrow pad: Left + Reset + Right -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp">
-
-            <TextView
-                android:id="@+id/btnLeft"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="◀"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg" />
-
-            <TextView
-                android:id="@+id/btnReset"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="✕"
-                android:textSize="16sp"
-                android:textColor="#BB86FC"
-                android:gravity="center"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:background="@drawable/arrow_btn_bg" />
-
-            <TextView
-                android:id="@+id/btnRight"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="▶"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg" />
+        <!-- Arrow LEFT + RESET + RIGHT -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center" android:layout_marginTop="4dp" android:layout_marginBottom="4dp">
+            <TextView android:id="@+id/btnLeft" android:layout_width="48dp" android:layout_height="48dp"
+                android:text="◀" android:textSize="22sp" android:textColor="#FFFFFF"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" />
+            <TextView android:id="@+id/btnReset"
+                android:layout_width="48dp" android:layout_height="48dp"
+                android:layout_marginStart="6dp" android:layout_marginEnd="6dp"
+                android:text="✕" android:textSize="18sp" android:textColor="#BB86FC"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" />
+            <TextView android:id="@+id/btnRight" android:layout_width="48dp" android:layout_height="48dp"
+                android:text="▶" android:textSize="22sp" android:textColor="#FFFFFF"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" />
         </LinearLayout>
 
-        <!-- Arrow pad: Down -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="8dp">
-            <TextView
-                android:id="@+id/btnDown"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="▼"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg" />
+        <!-- Arrow DOWN -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center" android:layout_marginBottom="8dp">
+            <TextView android:id="@+id/btnDown" android:layout_width="48dp" android:layout_height="48dp"
+                android:text="▼" android:textSize="22sp" android:textColor="#FFFFFF"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" />
         </LinearLayout>
 
-        <!-- Step size selector -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Step: "
-                android:textColor="#BBFFFFFF"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/btnStep1"
-                android:layout_width="32dp"
-                android:layout_height="28dp"
-                android:text="1"
-                android:textSize="11sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg"
-                android:layout_marginStart="4dp" />
-
-            <TextView
-                android:id="@+id/btnStep5"
-                android:layout_width="32dp"
-                android:layout_height="28dp"
-                android:text="5"
-                android:textSize="11sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg"
-                android:layout_marginStart="4dp" />
-
-            <TextView
-                android:id="@+id/btnStep10"
-                android:layout_width="32dp"
-                android:layout_height="28dp"
-                android:text="10"
-                android:textSize="11sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg"
-                android:layout_marginStart="4dp" />
-
-            <TextView
-                android:id="@+id/btnStep20"
-                android:layout_width="32dp"
-                android:layout_height="28dp"
-                android:text="20"
-                android:textSize="11sp"
-                android:textColor="#FFFFFFFF"
-                android:gravity="center"
-                android:background="@drawable/arrow_btn_bg"
-                android:layout_marginStart="4dp" />
+        <!-- Step selector -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center" android:layout_marginBottom="8dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Step:" android:textColor="#AAAAAA" android:textSize="12sp" />
+            <TextView android:id="@+id/btnStep1"  android:layout_width="34dp" android:layout_height="28dp"
+                android:layout_marginStart="4dp" android:text="1"  android:textSize="11sp"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" android:textColor="#FFFFFF" />
+            <TextView android:id="@+id/btnStep5"  android:layout_width="34dp" android:layout_height="28dp"
+                android:layout_marginStart="4dp" android:text="5"  android:textSize="11sp"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" android:textColor="#FFFFFF" />
+            <TextView android:id="@+id/btnStep10" android:layout_width="34dp" android:layout_height="28dp"
+                android:layout_marginStart="4dp" android:text="10" android:textSize="11sp"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" android:textColor="#FFFFFF" />
+            <TextView android:id="@+id/btnStep20" android:layout_width="34dp" android:layout_height="28dp"
+                android:layout_marginStart="4dp" android:text="20" android:textSize="11sp"
+                android:gravity="center" android:background="@drawable/arrow_btn_bg" android:textColor="#FFFFFF" />
         </LinearLayout>
 
-        <!-- Stop button -->
+        <!-- Stop -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/overlayBtnStop"
             android:layout_width="match_parent"
             android:layout_height="36dp"
             android:text="Stop Overlay"
-            android:textSize="13sp"
+            android:textSize="12sp"
             app:cornerRadius="8dp"
             app:backgroundTint="#CF6679" />
 
