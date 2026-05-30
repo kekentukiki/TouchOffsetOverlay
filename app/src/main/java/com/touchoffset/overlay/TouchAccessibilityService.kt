@@ -21,17 +21,14 @@ class TouchAccessibilityService : AccessibilityService() {
          * Dispatch a single tap at the given coordinates via the Accessibility API.
          * Returns true if the gesture was accepted.
          */
-        fun dispatchOffsetTouch(rawX: Float, rawY: Float): Boolean {
-            val svc = instance ?: return false
+        fun dispatchOffsetTouch(rawX: Float, rawY: Float, action: Int = 0) {
+            val svc = instance ?: return
             val targetX = rawX + OffsetState.offsetX
             val targetY = rawY + OffsetState.offsetY
-
-            // Clamp to avoid dispatching off-screen
             val path = Path().apply { moveTo(targetX, targetY) }
             val stroke = GestureDescription.StrokeDescription(path, 0L, 50L)
             val gesture = GestureDescription.Builder().addStroke(stroke).build()
-
-            return svc.dispatchGesture(gesture, object : GestureResultCallback() {
+            svc.dispatchGesture(gesture, object : GestureResultCallback() {
                 override fun onCompleted(gestureDescription: GestureDescription) {
                     Log.d(TAG, "Gesture dispatched → ($targetX, $targetY)")
                 }
