@@ -77,6 +77,8 @@ class TestSketchView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // Prevent parent ScrollView from stealing our touch events
+        parent?.requestDisallowInterceptTouchEvent(true)
         val fx = event.x; val fy = event.y
         val ox = fx + shiftX; val oy = fy + shiftY
         when (event.actionMasked) {
