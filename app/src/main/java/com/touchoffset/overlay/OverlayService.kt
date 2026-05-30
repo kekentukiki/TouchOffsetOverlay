@@ -92,15 +92,16 @@ class OverlayService : Service() {
         val view = View(this)
         view.setBackgroundColor(0x00000000)
         view.setOnTouchListener { _, event ->
-            // Consume touch and dispatch offset version
-            if (event.actionMasked == MotionEvent.ACTION_DOWN ||
-                event.actionMasked == MotionEvent.ACTION_MOVE ||
-                event.actionMasked == MotionEvent.ACTION_UP) {
-                TouchAccessibilityService.dispatchOffsetTouch(
-                    event.rawX, event.rawY, event.actionMasked
-                )
+            // Build a continuous stroke: DOWN starts it, MOVE extends it, UP ends it
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.ACTION_MOVE,
+                MotionEvent.ACTION_UP ->
+                    TouchAccessibilityService.handleTouchEvent(
+                        event.rawX, event.rawY, event.actionMasked
+                    )
             }
-            true  // consume so only offset touch reaches the app
+            true  // consume original so only the offset version reaches the drawing app
         }
         windowManager.addView(view, captureParams)
         captureView = view
@@ -123,9 +124,9 @@ class OverlayService : Service() {
             Log.e(TAG, "updateViewLayout: ${e.message}")
         }}
         panelBinding?.btnToggleCapture?.let { btn ->
-            btn.text = if (enabled) "● INTERCEPT ON" else "● INTERCEPT OFF"
+            btn.text = if (enabled) "🟢 OFFSET AKTIF — tap utk stop" else "▶ MULAI OFFSET (sekarang: mati)"
             btn.setBackgroundColor(
-                if (enabled) 0xFFCF6679.toInt() else 0xFF333355.toInt()
+                if (enabled) 0xFFCF6679.toInt() else 0xFF1B5E20.toInt()
             )
         }
     }
