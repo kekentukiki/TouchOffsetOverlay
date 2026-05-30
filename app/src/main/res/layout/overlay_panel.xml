@@ -6,47 +6,34 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/overlay_panel_bg"
-    android:padding="14dp"
+    android:padding="12dp"
     android:elevation="12dp">
 
-    <!-- Header row -->
+    <!-- Header / drag handle -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="28dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="10dp">
-
-        <View
-            android:id="@+id/dragHandle"
-            android:layout_width="0dp"
-            android:layout_height="22dp"
-            android:layout_weight="1"
-            android:background="@android:color/transparent" />
+        android:layout_marginBottom="8dp">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="⊕ Offset"
+            android:layout_weight="1"
+            android:text="⊕ Touch Offset"
             android:textColor="#FFFFFFFF"
             android:textSize="13sp"
-            android:textStyle="bold"
-            android:layout_weight="0" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/btnCollapse"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:text="−"
-            android:textColor="#FFFFFFFF"
-            android:textSize="18sp"
-            android:gravity="center"
-            android:layout_weight="0" />
+            android:textColor="#BBFFFFFF"
+            android:textSize="20sp"
+            android:gravity="center" />
     </LinearLayout>
 
     <!-- Expandable content -->
@@ -56,80 +43,191 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- X Offset -->
+        <!-- Crosshair preview -->
+        <com.touchoffset.overlay.OffsetPreviewView
+            android:id="@+id/offsetPreview"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Coordinates display -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="2dp">
+            android:gravity="center"
+            android:layout_marginBottom="8dp">
+
             <TextView
-                android:layout_width="20dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="X"
-                android:textColor="#BB86FC"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-            <com.google.android.material.slider.Slider
-                android:id="@+id/overlaySliderX"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:valueFrom="-300"
-                android:valueTo="300"
-                android:value="0"
-                android:stepSize="1"
-                app:thumbColor="#BB86FC"
-                app:thumbRadius="8dp"
-                app:trackColorActive="#BB86FC"
-                app:trackColorInactive="#3D3D3D"
-                app:trackHeight="3dp" />
+                android:text="X: "
+                android:textColor="#BBFFFFFF"
+                android:textSize="13sp" />
             <TextView
                 android:id="@+id/overlayTvX"
-                android:layout_width="40dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
                 android:textColor="#BB86FC"
-                android:textSize="11sp"
-                android:gravity="end" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:minWidth="32dp"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="    Y: "
+                android:textColor="#BBFFFFFF"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/overlayTvY"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#BB86FC"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:minWidth="32dp"
+                android:gravity="center" />
         </LinearLayout>
 
-        <!-- Y Offset -->
+        <!-- Arrow pad: Up -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="10dp">
+            android:gravity="center">
             <TextView
-                android:layout_width="20dp"
-                android:layout_height="wrap_content"
-                android:text="Y"
-                android:textColor="#BB86FC"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-            <com.google.android.material.slider.Slider
-                android:id="@+id/overlaySliderY"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:valueFrom="-300"
-                android:valueTo="300"
-                android:value="0"
-                android:stepSize="1"
-                app:thumbColor="#BB86FC"
-                app:thumbRadius="8dp"
-                app:trackColorActive="#BB86FC"
-                app:trackColorInactive="#3D3D3D"
-                app:trackHeight="3dp" />
+                android:id="@+id/btnUp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="▲"
+                android:textSize="20sp"
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg" />
+        </LinearLayout>
+
+        <!-- Arrow pad: Left + Reset + Right -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp">
+
             <TextView
-                android:id="@+id/overlayTvY"
-                android:layout_width="40dp"
-                android:layout_height="wrap_content"
-                android:text="0"
+                android:id="@+id/btnLeft"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="◀"
+                android:textSize="20sp"
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg" />
+
+            <TextView
+                android:id="@+id/btnReset"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="✕"
+                android:textSize="16sp"
                 android:textColor="#BB86FC"
+                android:gravity="center"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/arrow_btn_bg" />
+
+            <TextView
+                android:id="@+id/btnRight"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="▶"
+                android:textSize="20sp"
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg" />
+        </LinearLayout>
+
+        <!-- Arrow pad: Down -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:id="@+id/btnDown"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="▼"
+                android:textSize="20sp"
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg" />
+        </LinearLayout>
+
+        <!-- Step size selector -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Step: "
+                android:textColor="#BBFFFFFF"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/btnStep1"
+                android:layout_width="32dp"
+                android:layout_height="28dp"
+                android:text="1"
                 android:textSize="11sp"
-                android:gravity="end" />
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg"
+                android:layout_marginStart="4dp" />
+
+            <TextView
+                android:id="@+id/btnStep5"
+                android:layout_width="32dp"
+                android:layout_height="28dp"
+                android:text="5"
+                android:textSize="11sp"
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg"
+                android:layout_marginStart="4dp" />
+
+            <TextView
+                android:id="@+id/btnStep10"
+                android:layout_width="32dp"
+                android:layout_height="28dp"
+                android:text="10"
+                android:textSize="11sp"
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg"
+                android:layout_marginStart="4dp" />
+
+            <TextView
+                android:id="@+id/btnStep20"
+                android:layout_width="32dp"
+                android:layout_height="28dp"
+                android:text="20"
+                android:textSize="11sp"
+                android:textColor="#FFFFFFFF"
+                android:gravity="center"
+                android:background="@drawable/arrow_btn_bg"
+                android:layout_marginStart="4dp" />
         </LinearLayout>
 
         <!-- Stop button -->
@@ -141,5 +239,6 @@
             android:textSize="13sp"
             app:cornerRadius="8dp"
             app:backgroundTint="#CF6679" />
+
     </LinearLayout>
 </LinearLayout>
