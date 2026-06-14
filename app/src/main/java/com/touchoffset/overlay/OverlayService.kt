@@ -48,7 +48,7 @@ class OverlayService : Service() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification(capturing = false))
+        startForeground(NOTIFICATION_ID, buildNotification(capturing = false, a11yMissing = false))
 
         try { setupCaptureOverlay() } catch (e: Exception) { Log.e(TAG, "Capture: ${e.message}") }
         try { addControlPanel()     } catch (e: Exception) { Log.e(TAG, "Panel: ${e.message}")   }
@@ -88,6 +88,11 @@ class OverlayService : Service() {
 
         val view = View(this)
         view.setOnTouchListener { _, event ->
+            // ── CRITICAL: if we are currently injecting an offset gesture,
+            // this event IS that injection coming back through the window stack.
+            // Pass it through (return false) so it reaches the drawing app below.
+            if (OffsetState.injecting) return@setOnTouchListener false
+
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_MOVE,
@@ -97,13 +102,24 @@ class OverlayService : Service() {
                         resources.displayMetrics.density
                     )
             }
-            true   // consume — only the offset version reaches the drawing app
+            true   // consume real user touch — only the offset version reaches the drawing app
         }
         windowManager.addView(view, captureParams)
         captureView = view
     }
 
     private fun setCapturing(enabled: Boolean) {
+        // Guard: cannot capture without AccessibilityService connected
+        if (enabled && !OffsetState.a11yConnected) {
+            getSystemService(NotificationManager::class.java)
+                .notify(NOTIFICATION_ID, buildNotification(capturing = false, a11yMissing = true))
+            // Show warning in panel button
+            panelBinding?.btnToggleCapture?.let { btn ->
+                btn.text = "⚠ Aktifkan Accessibility Service dulu!"
+                btn.setBackgroundColor(0xFFB8860B.toInt())
+            }
+            return
+        }
         isCapturing = enabled
         captureParams.flags = if (enabled) {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -127,7 +143,7 @@ class OverlayService : Service() {
 
         // Update notification so user can toggle from the notification shade
         getSystemService(NotificationManager::class.java)
-            .notify(NOTIFICATION_ID, buildNotification(capturing = enabled))
+            .notify(NOTIFICATION_ID, buildNotification(capturing = enabled, a11yMissing = false))
     }
 
     // ─── Floating panel ──────────────────────────────────────────────────────
@@ -233,7 +249,7 @@ class OverlayService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
     }
 
-    private fun buildNotification(capturing: Boolean): Notification {
+    private fun buildNotification(capturing: Boolean, a11yMissing: Boolean = false): Notification {
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(
@@ -249,10 +265,11 @@ class OverlayService : Service() {
             this, 2, toggleIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-        val statusText = if (capturing)
-            "Offset AKTIF (${OffsetState.offsetX}, ${OffsetState.offsetY}) — geser notif untuk JEDA"
-        else
-            "Offset DIJEDA — geser notif untuk LANJUT"
+        val statusText = when {
+            a11yMissing -> "⚠ Buka Setelan → Aksesibilitas → aktifkan Touch Offset!"
+            capturing   -> "Offset AKTIF (${OffsetState.offsetX}, ${OffsetState.offsetY}) — geser notif untuk JEDA"
+            else        -> "Offset DIJEDA — geser notif untuk LANJUT"
+        }
 
         return Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("Touch Offset Overlay")
