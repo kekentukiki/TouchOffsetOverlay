@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.os.Handler
+import android.os.Looper
 import android.os.IBinder
 import android.util.Log
 import android.view.Gravity
@@ -21,11 +23,22 @@ class OverlayService : Service() {
 
     companion object {
         private const val TAG = "OverlayService"
-        const val CHANNEL_ID  = "touch_offset_channel"
+        const val CHANNEL_ID      = "touch_offset_channel"
         const val NOTIFICATION_ID = 1
-        const val ACTION_STOP   = "com.touchoffset.overlay.ACTION_STOP"
-        const val ACTION_PAUSE  = "com.touchoffset.overlay.ACTION_PAUSE"
-        const val ACTION_RESUME = "com.touchoffset.overlay.ACTION_RESUME"
+        const val ACTION_STOP     = "com.touchoffset.overlay.ACTION_STOP"
+        const val ACTION_PAUSE    = "com.touchoffset.overlay.ACTION_PAUSE"
+        const val ACTION_RESUME   = "com.touchoffset.overlay.ACTION_RESUME"
+
+        // Flags used when the capture overlay is ACTIVE (intercepts real touches)
+        private const val FLAGS_TOUCHABLE =
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+
+        // Flags used when we want the overlay to be transparent to input
+        private const val FLAGS_NOT_TOUCHABLE =
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
     }
 
     private lateinit var windowManager: WindowManager
@@ -42,18 +55,31 @@ class OverlayService : Service() {
     private var touchRawX = 0f;   private var touchRawY = 0f
     private var isDragging = false
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /** Re-enables touch capture after the injected gesture has had time to be delivered. */
+    private val resumeCaptureRunnable = Runnable {
+        if (isCapturing) {
+            captureParams.flags = FLAGS_TOUCHABLE
+            captureView?.let {
+                try { windowManager.updateViewLayout(it, captureParams) }
+                catch (e: Exception) { Log.e(TAG, "resumeCapture: ${e.message}") }
+            }
+        }
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification(capturing = false, a11yMissing = false))
+        startForeground(NOTIFICATION_ID, buildNotification(capturing = false))
 
         try { setupCaptureOverlay() } catch (e: Exception) { Log.e(TAG, "Capture: ${e.message}") }
         try { addControlPanel()     } catch (e: Exception) { Log.e(TAG, "Panel: ${e.message}")   }
 
-        setCapturing(true)   // active immediately — no button needed
+        setCapturing(true)   // active immediately — no extra button press needed
         OffsetState.isServiceRunning = true
     }
 
@@ -68,82 +94,95 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         OffsetState.isServiceRunning = false
+        mainHandler.removeCallbacks(resumeCaptureRunnable)
         captureView?.let { try { windowManager.removeView(it) } catch (_: Exception) {} }
         panelView?.let   { try { windowManager.removeView(it) } catch (_: Exception) {} }
         super.onDestroy()
     }
 
     // ─── Touch capture overlay ────────────────────────────────────────────────
+    //
+    // HOW THE INJECTION LOOP IS AVOIDED:
+    //
+    //   1. Real user touch arrives → overlay is TOUCHABLE → we capture it.
+    //   2. Before dispatching the offset gesture we immediately flip the overlay
+    //      to FLAG_NOT_TOUCHABLE.  Window-Manager applies this synchronously before
+    //      the next input event is routed.
+    //   3. The AccessibilityService injects the offset gesture.  Because the overlay
+    //      is now FLAG_NOT_TOUCHABLE the input system skips it and delivers the
+    //      gesture directly to the drawing app below.  ✓
+    //   4. A Handler callback flips the overlay back to TOUCHABLE ~16 ms later so
+    //      the next real MOVE/DOWN can be captured again.
+    //
+    // Net effect: the drawing app sees only the offset gestures, never the raw ones.
 
     private fun setupCaptureOverlay() {
         captureParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,   // OFF by default
+            FLAGS_NOT_TOUCHABLE,   // starts non-touchable; enabled in setCapturing()
             PixelFormat.TRANSPARENT
         ).apply { gravity = Gravity.TOP or Gravity.START }
 
         val view = View(this)
         view.setOnTouchListener { _, event ->
-            // ── CRITICAL: if we are currently injecting an offset gesture,
-            // this event IS that injection coming back through the window stack.
-            // Pass it through (return false) so it reaches the drawing app below.
-            if (OffsetState.injecting) return@setOnTouchListener false
-
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_MOVE,
-                MotionEvent.ACTION_UP ->
+                MotionEvent.ACTION_UP -> {
+                    // Step 1: make overlay transparent to input BEFORE dispatching,
+                    // so the injected offset gesture reaches the drawing app.
+                    captureParams.flags = FLAGS_NOT_TOUCHABLE
+                    try { windowManager.updateViewLayout(view, captureParams) }
+                    catch (e: Exception) { Log.e(TAG, "pauseCapture: ${e.message}") }
+
+                    // Step 2: dispatch offset gesture (arrives while overlay is NOT_TOUCHABLE)
                     TouchAccessibilityService.handleTouchEvent(
                         event.rawX, event.rawY, event.actionMasked,
                         resources.displayMetrics.density
                     )
+
+                    // Step 3: restore touchable after one frame so the next real event
+                    // is captured.  Remove any pending restore first to avoid stacking.
+                    mainHandler.removeCallbacks(resumeCaptureRunnable)
+                    mainHandler.postDelayed(resumeCaptureRunnable, 16L)
+                }
             }
-            true   // consume real user touch — only the offset version reaches the drawing app
+            true   // consume the real touch; only the offset copy reaches the drawing app
         }
         windowManager.addView(view, captureParams)
         captureView = view
     }
 
     private fun setCapturing(enabled: Boolean) {
-        // Guard: cannot capture without AccessibilityService connected
+        // Guard: silently refuse if AccessibilityService is not yet bound
         if (enabled && !OffsetState.a11yConnected) {
             getSystemService(NotificationManager::class.java)
                 .notify(NOTIFICATION_ID, buildNotification(capturing = false, a11yMissing = true))
-            // Show warning in panel button
             panelBinding?.btnToggleCapture?.let { btn ->
                 btn.text = "⚠ Aktifkan Accessibility Service dulu!"
                 btn.setBackgroundColor(0xFFB8860B.toInt())
             }
             return
         }
+
         isCapturing = enabled
-        captureParams.flags = if (enabled) {
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-        } else {
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-        }
+        mainHandler.removeCallbacks(resumeCaptureRunnable)
+
+        captureParams.flags = if (enabled) FLAGS_TOUCHABLE else FLAGS_NOT_TOUCHABLE
         captureView?.let {
-            try { windowManager.updateViewLayout(it, captureParams) } catch (e: Exception) {
-                Log.e(TAG, "updateLayout: ${e.message}")
-            }
+            try { windowManager.updateViewLayout(it, captureParams) }
+            catch (e: Exception) { Log.e(TAG, "setCapturing: ${e.message}") }
         }
 
-        // Update floating panel button
         panelBinding?.btnToggleCapture?.let { btn ->
             btn.text = if (enabled) "⏸ JEDA offset (aktif)" else "▶ MULAI offset (mati)"
             btn.setBackgroundColor(if (enabled) 0xFFCF6679.toInt() else 0xFF1B5E20.toInt())
         }
 
-        // Update notification so user can toggle from the notification shade
         getSystemService(NotificationManager::class.java)
-            .notify(NOTIFICATION_ID, buildNotification(capturing = enabled, a11yMissing = false))
+            .notify(NOTIFICATION_ID, buildNotification(capturing = enabled))
     }
 
     // ─── Floating panel ──────────────────────────────────────────────────────
@@ -257,7 +296,6 @@ class OverlayService : Service() {
             Intent(this, OverlayService::class.java).apply { action = ACTION_STOP },
             PendingIntent.FLAG_IMMUTABLE)
 
-        // JEDA / LANJUT — user can tap from notification shade even when screen is "frozen"
         val toggleIntent = Intent(this, OverlayService::class.java).apply {
             action = if (capturing) ACTION_PAUSE else ACTION_RESUME
         }
@@ -267,8 +305,8 @@ class OverlayService : Service() {
 
         val statusText = when {
             a11yMissing -> "⚠ Buka Setelan → Aksesibilitas → aktifkan Touch Offset!"
-            capturing   -> "Offset AKTIF (${OffsetState.offsetX}, ${OffsetState.offsetY}) — geser notif untuk JEDA"
-            else        -> "Offset DIJEDA — geser notif untuk LANJUT"
+            capturing   -> "Offset AKTIF (${OffsetState.offsetX}, ${OffsetState.offsetY})"
+            else        -> "Offset DIJEDA — ketuk LANJUT untuk aktifkan"
         }
 
         return Notification.Builder(this, CHANNEL_ID)
